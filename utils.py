@@ -57,7 +57,7 @@ class Utils_functions:
             fft_length=4 * self.args.hop,
             window_fn=tf.signal.inverse_stft_window_fn(self.args.hop),
         )
-        return np.squeeze(wv)
+        return tf.squeeze(wv)
 
     def _tf_log10(self, x):
         numerator = tf.math.log(x)
@@ -201,9 +201,11 @@ class Utils_functions:
             inp = tf.concat(inpls, 0)
             res = model(inp, training=False)
             outls.append(res)
-        return np.concatenate([outls[k][0] for k in range(len(outls))], 0), np.concatenate(
-            [outls[k][1] for k in range(len(outls))], 0
-        )
+
+        out0 = tf.concat([outls[k][0] for k in range(len(outls))], 0)
+        out1 = tf.concat([outls[k][1] for k in range(len(outls))], 0)
+        return out0, out1
+
 
     def distribute_dec2(self, x, model, bs=32):
         outls = []
@@ -320,7 +322,7 @@ class Utils_functions:
             wv = self.conc_tog_specphase(ab_m, ab_p)
             chls.append(wv)
 
-        return np.stack(chls, -1)
+        return tf.stack(chls, -1)
 
     # Save in training loop
     def save_test_image_full(self, path, models_ls=None):
