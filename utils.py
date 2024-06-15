@@ -27,7 +27,7 @@ class Utils_functions:
         mel_f = tf.convert_to_tensor(librosa.mel_frequencies(n_mels=args.mel_bins + 2, fmin=0.0, fmax=args.sr // 2))
         enorm = tf.cast(
             tf.expand_dims(
-                tf.constant(2.0 / (mel_f[2 : args.mel_bins + 2] - mel_f[: args.mel_bins])),
+                tf.constant(2.0 / (mel_f[2: args.mel_bins + 2] - mel_f[: args.mel_bins])),
                 0,
             ),
             tf.float32,
@@ -160,11 +160,11 @@ class Utils_functions:
         if isinstance(x, list):
             bdim = x[0].shape[0]
             for i in range(((bdim - 2) // bs) + 1):
-                outls.append(model([el[i * bs : i * bs + bs] for el in x], training=False))
+                outls.append(model([el[i * bs: i * bs + bs] for el in x], training=False))
         else:
             bdim = x.shape[0]
             for i in range(((bdim - 2) // bs) + 1):
-                outls.append(model(x[i * bs : i * bs + bs], training=False))
+                outls.append(model(x[i * bs: i * bs + bs], training=False))
 
         if dual_out:
             return np.concatenate([outls[k][0] for k in range(len(outls))], 0), np.concatenate(
@@ -178,14 +178,14 @@ class Utils_functions:
         if isinstance(x, list):
             bdim = x[0].shape[0]
             for i in range(((bdim - 2) // bs) + 1):
-                res = model([el[i * bs : i * bs + bs] for el in x], training=False)
+                res = model([el[i * bs: i * bs + bs] for el in x], training=False)
                 resls = tf.split(res, self.args.shape // self.args.window, 0)
                 res = tf.concat(resls, -2)
                 outls.append(res)
         else:
             bdim = x.shape[0]
             for i in range(((bdim - 2) // bs) + 1):
-                res = model(x[i * bs : i * bs + bs], training=False)
+                res = model(x[i * bs: i * bs + bs], training=False)
                 resls = tf.split(res, self.args.shape // self.args.window, 0)
                 res = tf.concat(resls, -2)
                 outls.append(res)
@@ -196,7 +196,7 @@ class Utils_functions:
         outls = []
         bdim = x.shape[0]
         for i in range(((bdim - 2) // bs) + 1):
-            inp = x[i * bs : i * bs + bs]
+            inp = x[i * bs: i * bs + bs]
             inpls = tf.split(inp, 2, -2)
             inp = tf.concat(inpls, 0)
             res = model(inp, training=False)
@@ -206,12 +206,11 @@ class Utils_functions:
         out1 = tf.concat([outls[k][1] for k in range(len(outls))], 0)
         return out0, out1
 
-
     def distribute_dec2(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
         for i in range(((bdim - 2) // bs) + 1):
-            inp1 = x[i * bs : i * bs + bs]
+            inp1 = x[i * bs: i * bs + bs]
             inpls = tf.split(inp1, 2, -2)
             inp1 = tf.concat(inpls, 0)
             outls.append(model(inp1, training=False))
@@ -219,51 +218,50 @@ class Utils_functions:
         return tf.concat(outls, 0)
 
     def center_coordinate(
-        self, x
+            self, x
     ):  # allows to have sequences with even number length with anchor in the middle of the sequence
         return tf.reduce_mean(tf.stack([x, tf.roll(x, -1, -2)], 0), 0)[:, :-1, :]
 
     # hardcoded! need to figure out how to generalize it without breaking jit compiling
     def crop_coordinate(
-        self, x
+            self, x
     ):  # randomly crops a conditioning sequence such that the anchor vector is at center of generator receptive field (maximum context is provided to the generator)
         fac = tf.random.uniform((), 0, self.args.coordlen // (self.args.latlen // 2), dtype=tf.int32)
-        if fac == 0:
+
+        def case_0():
             return tf.reshape(
                 x[
-                    :,
-                    (self.args.latlen // 4)
-                    + 0 * (self.args.latlen // 2) : (self.args.latlen // 4)
-                    + 0 * (self.args.latlen // 2)
-                    + self.args.latlen,
-                    :,
+                :,
+                (self.args.latlen // 4) + 0 * (self.args.latlen // 2): (self.args.latlen // 4) + 0 * (
+                        self.args.latlen // 2) + self.args.latlen,
+                :,
                 ],
-                [-1, self.args.latlen, x.shape[-1]],
+                [-1, self.args.latlen, x.shape[-1]]
             )
-        elif fac == 1:
+
+        def case_1():
             return tf.reshape(
                 x[
-                    :,
-                    (self.args.latlen // 4)
-                    + 1 * (self.args.latlen // 2) : (self.args.latlen // 4)
-                    + 1 * (self.args.latlen // 2)
-                    + self.args.latlen,
-                    :,
+                :,
+                (self.args.latlen // 4) + 1 * (self.args.latlen // 2): (self.args.latlen // 4) + 1 * (
+                        self.args.latlen // 2) + self.args.latlen,
+                :,
                 ],
-                [-1, self.args.latlen, x.shape[-1]],
+                [-1, self.args.latlen, x.shape[-1]]
             )
-        else:
+
+        def case_2():
             return tf.reshape(
                 x[
-                    :,
-                    (self.args.latlen // 4)
-                    + 2 * (self.args.latlen // 2) : (self.args.latlen // 4)
-                    + 2 * (self.args.latlen // 2)
-                    + self.args.latlen,
-                    :,
+                :,
+                (self.args.latlen // 4) + 2 * (self.args.latlen // 2): (self.args.latlen // 4) + 2 * (
+                        self.args.latlen // 2) + self.args.latlen,
+                :,
                 ],
-                [-1, self.args.latlen, x.shape[-1]],
+                [-1, self.args.latlen, x.shape[-1]]
             )
+
+        return tf.switch_case(fac, branch_fns={0: case_0, 1: case_1, 2: case_2})
 
     def update_switch(self, switch, ca, cab, learning_rate_switch=0.0001, stable_point=0.9):
         cert = tf.math.minimum(tf.math.maximum(tf.reduce_mean(ca) - tf.reduce_mean(cab), 0.0), 2.0) / 2.0
@@ -306,13 +304,12 @@ class Utils_functions:
 
         chls = []
         for channel in range(2):
-
             ab = self.distribute_dec2(
                 abb[
-                    :,
-                    :,
-                    :,
-                    channel * self.args.latdepth : channel * self.args.latdepth + self.args.latdepth,
+                :,
+                :,
+                :,
+                channel * self.args.latdepth: channel * self.args.latdepth + self.args.latdepth,
                 ],
                 dec2,
             )
@@ -412,19 +409,19 @@ class Utils_functions:
         plt.close()
 
     def save_end(
-        self,
-        epoch,
-        gloss,
-        closs,
-        mloss,
-        models_ls=None,
-        n_save=3,
-        save_path="checkpoints",
+            self,
+            epoch,
+            gloss,
+            closs,
+            mloss,
+            models_ls=None,
+            n_save=3,
+            save_path="checkpoints",
     ):
         (critic, gen, enc, dec, enc2, dec2, gen_ema, [opt_dec, opt_disc], switch) = models_ls
         if epoch % n_save == 0:
             print("Saving...")
-            path = f"{save_path}/MUSIKA_iterations-{((epoch+1)*self.args.totsamples)//(self.args.bs*1000)}k_losses-{str(gloss)[:9]}-{str(closs)[:9]}-{str(mloss)[:9]}"
+            path = f"{save_path}/MUSIKA_iterations-{((epoch + 1) * self.args.totsamples) // (self.args.bs * 1000)}k_losses-{str(gloss)[:9]}-{str(closs)[:9]}-{str(mloss)[:9]}"
             os.mkdir(path)
             critic.save_weights(path + "/critic.h5")
             gen.save_weights(path + "/gen.h5")
@@ -448,7 +445,7 @@ class Utils_functions:
         if bdim == 1:
             bdim = 2
         for i in range(((bdim - 2) // bs) + 1):
-            outls.append(model(x[i * bs : i * bs + bs], training=False))
+            outls.append(model(x[i * bs: i * bs + bs], training=False))
         return tf.concat(outls, 0)
 
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
@@ -461,9 +458,8 @@ class Utils_functions:
 
         chls = []
         for channel in range(2):
-
             ab = self.distribute_dec2(
-                abi[:, :, :, channel * self.args.latdepth : channel * self.args.latdepth + self.args.latdepth],
+                abi[:, :, :, channel * self.args.latdepth: channel * self.args.latdepth + self.args.latdepth],
                 dec2,
                 bs=batch_size,
             )
@@ -484,9 +480,8 @@ class Utils_functions:
 
         chls = []
         for channel in range(2):
-
             ab = self.distribute_dec2(
-                abi[:, :, :, channel * self.args.latdepth : channel * self.args.latdepth + self.args.latdepth],
+                abi[:, :, :, channel * self.args.latdepth: channel * self.args.latdepth + self.args.latdepth],
                 dec2,
                 bs=batch_size,
             )
@@ -517,7 +512,7 @@ class Utils_functions:
         )
 
         rls = self.center_coordinate(rls)
-        rls = rls[:, self.args.latlen // 4 :, :]
+        rls = rls[:, self.args.latlen // 4:, :]
         rls = rls[:, : (rls.shape[-2] // self.args.latlen) * self.args.latlen, :]
 
         rls = tf.split(rls, rls.shape[-2] // self.args.latlen, -2)
@@ -543,7 +538,7 @@ class Utils_functions:
         )
 
         rls = self.center_coordinate(rls)
-        rls = rls[:, self.args.latlen // 2 :, :]
+        rls = rls[:, self.args.latlen // 2:, :]
         rls = rls[:, : (rls.shape[-2] // self.args.latlen) * self.args.latlen, :]
 
         rls = tf.split(rls, rls.shape[-2] // self.args.latlen, -2)
