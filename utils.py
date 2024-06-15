@@ -221,13 +221,13 @@ class Utils_functions:
             self, x
     ):  # allows to have sequences with even number length with anchor in the middle of the sequence
         # Manually roll the tensor by shifting elements to the left
-        shifted_x = tf.concat([x[..., 1:], x[..., :1]], axis=-2)
+        shifted_x = tf.concat([x[:, :, 1:], x[:, :, :1]], axis=-2)
 
         # Stack the original and shifted tensors, then take the mean
-        result = tf.reduce_mean(tf.stack([x, shifted_x], 0), 0)
+        result = tf.reduce_mean(tf.stack([x, shifted_x], axis=0), axis=0)
 
         # Return the result excluding the last element in the specified axis
-        return result[:, :-1, :]
+        return result[:, :, :-1]
 
     # hardcoded! need to figure out how to generalize it without breaking jit compiling
     def crop_coordinate(
