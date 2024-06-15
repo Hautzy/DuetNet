@@ -220,7 +220,14 @@ class Utils_functions:
     def center_coordinate(
             self, x
     ):  # allows to have sequences with even number length with anchor in the middle of the sequence
-        return tf.reduce_mean(tf.stack([x, tf.roll(x, -1, -2)], 0), 0)[:, :-1, :]
+        # Exclude the last element along the second dimension
+        x_excluding_last = x[:, :-1, :]
+
+        # Exclude the first element along the second dimension
+        x_excluding_first = x[:, 1:, :]
+
+        # Stack and reduce mean along the new dimension
+        return tf.reduce_mean(tf.stack([x_excluding_last, x_excluding_first], 0), 0)
 
     # hardcoded! need to figure out how to generalize it without breaking jit compiling
     def crop_coordinate(
