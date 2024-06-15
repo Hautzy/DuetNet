@@ -220,7 +220,14 @@ class Utils_functions:
     def center_coordinate(
             self, x
     ):  # allows to have sequences with even number length with anchor in the middle of the sequence
-        return tf.reduce_mean(tf.stack([x, tf.roll(x, -1, -2)], 0), 0)[:, :-1, :]
+        # Manually roll the tensor by shifting elements to the left
+        shifted_x = tf.concat([x[..., 1:], x[..., :1]], axis=-2)
+
+        # Stack the original and shifted tensors, then take the mean
+        result = tf.reduce_mean(tf.stack([x, shifted_x], 0), 0)
+
+        # Return the result excluding the last element in the specified axis
+        return result[:, :-1, :]
 
     # hardcoded! need to figure out how to generalize it without breaking jit compiling
     def crop_coordinate(
@@ -228,40 +235,23 @@ class Utils_functions:
     ):  # randomly crops a conditioning sequence such that the anchor vector is at center of generator receptive field (maximum context is provided to the generator)
         fac = tf.random.uniform((), 0, self.args.coordlen // (self.args.latlen // 2), dtype=tf.int32)
 
-        def case_0():
+        def crop_case(offset):
             return tf.reshape(
                 x[
                 :,
-                (self.args.latlen // 4) + 0 * (self.args.latlen // 2): (self.args.latlen // 4) + 0 * (
-                        self.args.latlen // 2) + self.args.latlen,
+                (self.args.latlen // 4) + offset * (self.args.latlen // 2): (self.args.latlen // 4) + offset * (
+                            self.args.latlen // 2) + self.args.latlen,
                 :,
                 ],
                 [-1, self.args.latlen, x.shape[-1]]
             )
 
-        def case_1():
-            return tf.reshape(
-                x[
-                :,
-                (self.args.latlen // 4) + 1 * (self.args.latlen // 2): (self.args.latlen // 4) + 1 * (
-                        self.args.latlen // 2) + self.args.latlen,
-                :,
-                ],
-                [-1, self.args.latlen, x.shape[-1]]
-            )
+        case_0 = lambda: crop_case(0)
+        case_1 = lambda: crop_case(1)
+        case_2 = lambda: crop_case(2)
 
-        def case_2():
-            return tf.reshape(
-                x[
-                :,
-                (self.args.latlen // 4) + 2 * (self.args.latlen // 2): (self.args.latlen // 4) + 2 * (
-                        self.args.latlen // 2) + self.args.latlen,
-                :,
-                ],
-                [-1, self.args.latlen, x.shape[-1]]
-            )
-
-        return tf.switch_case(fac, branch_fns={0: case_0, 1: case_1, 2: case_2})
+        result = tf.cond(fac == 0, case_0, lambda: tf.cond(fac == 1, case_1, case_2))
+        return result
 
     def update_switch(self, switch, ca, cab, learning_rate_switch=0.0001, stable_point=0.9):
         cert = tf.math.minimum(tf.math.maximum(tf.reduce_mean(ca) - tf.reduce_mean(cab), 0.0), 2.0) / 2.0
