@@ -39,6 +39,7 @@ class Utils_functions:
         with np.errstate(divide="ignore", invalid="ignore"):
             self.melmatinv = tf.constant(np.nan_to_num(np.divide(melmat.numpy().T, np.sum(melmat.numpy(), axis=1))).T)
 
+    # https://chatgpt.com/share/c594694f-f348-4287-85c6-184196b53148
     def conc_tog_specphase(self, S, P):
         S = tf.cast(S, tf.float32)
         P = tf.cast(P, tf.float32)
@@ -49,6 +50,8 @@ class Utils_functions:
         S = tf.squeeze(tf.concat(Sls, 1), 0)
         Pls = tf.split(P, P.shape[0], 0)
         P = tf.squeeze(tf.concat(Pls, 1), 0)
+        return S, P
+        '''
         SP = tf.cast(S, tf.complex64) * tf.math.exp(1j * tf.cast(P, tf.complex64))
         wv = tf.signal.inverse_stft(
             SP,
@@ -58,6 +61,7 @@ class Utils_functions:
             window_fn=tf.signal.inverse_stft_window_fn(self.args.hop),
         )
         return tf.squeeze(wv)
+        '''
 
     def _tf_log10(self, x):
         numerator = tf.math.log(x)
@@ -240,7 +244,7 @@ class Utils_functions:
                 x[
                 :,
                 (self.args.latlen // 4) + offset * (self.args.latlen // 2): (self.args.latlen // 4) + offset * (
-                            self.args.latlen // 2) + self.args.latlen,
+                        self.args.latlen // 2) + self.args.latlen,
                 :,
                 ],
                 [-1, self.args.latlen, x.shape[-1]]
@@ -306,10 +310,18 @@ class Utils_functions:
             abls = tf.split(ab, ab.shape[-2] // self.args.shape, -2)
             ab = tf.concat(abls, 0)
             ab_m, ab_p = self.distribute_dec(ab, dec)
-            wv = self.conc_tog_specphase(ab_m, ab_p)
-            chls.append(wv)
+            S, P = self.conc_tog_specphase(ab_m, ab_p)
+            chls.append((S, P))
 
-        return tf.stack(chls, -1)
+        S = tf.stack([ch[0] for ch in chls], -1)
+        P = tf.stack([ch[1] for ch in chls], -1)
+
+        return S, P
+
+    '''     wv = self.conc_tog_specphase(ab_m, ab_p)
+         chls.append(wv)
+
+     return tf.stack(chls, -1)'''
 
     # Save in training loop
     def save_test_image_full(self, path, models_ls=None):
