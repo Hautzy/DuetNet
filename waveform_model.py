@@ -1,4 +1,5 @@
 import os
+import tensorflow as tf
 from tensorflow.keras.layers import Layer, Input
 from tensorflow.keras.models import Model
 from parse.parse_generate import parse_args
@@ -32,7 +33,8 @@ waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
-waveform_model.build(input_shape=(None, 256, 128))
+dummy_input = tf.random.normal([1, 256, 128])
+_ = waveform_model(dummy_input)
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)
