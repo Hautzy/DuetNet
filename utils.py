@@ -199,6 +199,8 @@ class Utils_functions:
     def distribute_dec(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
+        if bdim is None:
+            bdim = 6
         for i in range(((bdim - 2) // bs) + 1):
             inp = x[i * bs: i * bs + bs]
             inpls = tf.split(inp, 2, -2)
@@ -213,6 +215,8 @@ class Utils_functions:
     def distribute_dec2(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
+        if bdim is None:
+            bdim = 6
         for i in range(((bdim - 2) // bs) + 1):
             inp1 = x[i * bs: i * bs + bs]
             inpls = tf.split(inp1, 2, -2)
@@ -446,6 +450,8 @@ class Utils_functions:
     def distribute_gen(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
+        if bdim is None:
+            bdim = 6
         if bdim == 1:
             bdim = 2
         for i in range(((bdim - 2) // bs) + 1):
@@ -458,7 +464,7 @@ class Utils_functions:
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
         dim0 = inp.shape[0]
         if dim0 is None:
-            dim0 = 1
+            dim0 = 6
         abls = tf.split(ab, dim0, 0)
         ab = tf.concat(abls, -2)
         abls = tf.split(ab, ab.shape[-2] // 8, -2)
