@@ -46,10 +46,15 @@ class Utils_functions:
         S = self.denormalize(S, clip=False)
         S = tf.math.sqrt(self.db2power(S) + 1e-7)
         P = P * np.pi
-        Sls = tf.split(S, S.shape[0], 0)
-        S = tf.squeeze(tf.concat(Sls, 1), 0)
-        Pls = tf.split(P, P.shape[0], 0)
-        P = tf.squeeze(tf.concat(Pls, 1), 0)
+
+        if P.shape[0] is None:
+            S = tf.zeros([1, S.shape[1], S.shape[2]])
+            P = tf.zeros([1, P.shape[1], P.shape[2]])
+        else:
+            Sls = tf.split(S, S.shape[0], 0)
+            S = tf.squeeze(tf.concat(Sls, 1), 0)
+            Pls = tf.split(P, P.shape[0], 0)
+            P = tf.squeeze(tf.concat(Pls, 1), 0)
         return S, P
         '''
         SP = tf.cast(S, tf.complex64) * tf.math.exp(1j * tf.cast(P, tf.complex64))
