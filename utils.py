@@ -292,7 +292,9 @@ class Utils_functions:
             [opt_dec, opt_disc],
             switch,
         ) = models_ls
-        abb = gen_ema(self.get_noise_interp(), training=False)
+        inp = self.get_noise_interp()
+        print(inp.shape)
+        abb = gen_ema(inp, training=False)
         abbls = tf.split(abb, abb.shape[-2] // 8, -2)
         abb = tf.concat(abbls, 0)
 
