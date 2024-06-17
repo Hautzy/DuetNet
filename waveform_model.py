@@ -17,6 +17,8 @@ class GenerateWaveformLayer(Layer):
     def call(self, inputs):
         print('call')
         print(inputs.shape)
+        if None in inputs.shape:
+            return tf.zeros_like(inputs)
         return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
 
