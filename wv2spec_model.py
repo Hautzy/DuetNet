@@ -37,4 +37,4 @@ wv2spec_model.build(input_shape=[None, 2])
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)
 
-wv2spec_model.save(f'./{export_folder}/wv2spec_model_model')
+wv2spec_model.save(f'./{export_folder}/wv2spec_model')
