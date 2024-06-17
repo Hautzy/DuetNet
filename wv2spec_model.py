@@ -28,14 +28,12 @@ args = parse_args()
 
 U = Utils_functions(args)
 
-input_tensor = Input(shape=(2))
+input_tensor = Input(shape=(128, 2))
 wv2spec_layer = Wv2SpecLayer(80.0, args.hop)(input_tensor)
 
 wv2spec_model = Model(inputs=input_tensor, outputs=wv2spec_layer)
 
-dummy_input = tf.random.normal([256, 2])
-res = wv2spec_model(dummy_input)
-print(res.shape)
+wv2spec_model.build(input_shape=[None, 2])
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)
