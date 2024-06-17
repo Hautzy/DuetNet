@@ -15,6 +15,8 @@ class GenerateWaveformLayer(Layer):
         self.dec2 = dec2
 
     def call(self, inputs):
+        print('call')
+        print(inputs.shape)
         return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
 
