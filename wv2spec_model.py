@@ -27,7 +27,7 @@ args = parse_args()
 
 U = Utils_functions(args)
 
-input_tensor = Input(shape=(128, 2))
+input_tensor = Input(shape=(2))
 wv2spec_layer = Wv2SpecLayer(80.0, args.hop)(input_tensor)
 
 wv2spec_model = Model(inputs=input_tensor, outputs=wv2spec_layer)
