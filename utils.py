@@ -444,6 +444,8 @@ class Utils_functions:
     def distribute_gen(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
+        if bdim is None:
+            bdim = 1
         print(bdim)
         if bdim == 1:
             bdim = 2
