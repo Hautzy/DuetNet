@@ -445,8 +445,11 @@ class Utils_functions:
         outls = []
         bdim = x.shape[0]
         print(bdim)
+        if bdim is None:
+            bdim = 1
         if bdim == 1:
             bdim = 2
+        print(bdim)
         print(f'range: {((bdim - 2) // bs) + 1}')
         for i in range(((bdim - 2) // bs) + 1):
             print(i)
