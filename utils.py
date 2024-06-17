@@ -199,6 +199,8 @@ class Utils_functions:
     def distribute_dec(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
+        if bdim is None:
+            bdim = 1
         for i in range(((bdim - 2) // bs) + 1):
             inp = x[i * bs: i * bs + bs]
             inpls = tf.split(inp, 2, -2)
