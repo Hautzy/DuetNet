@@ -462,7 +462,10 @@ class Utils_functions:
         print(inp.shape)
 
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
-        abls = tf.split(ab, ab.shape[0], 0)
+        dim0 = inp.shape[0]
+        if dim0 is None:
+            dim0 = 1
+        abls = tf.split(ab, dim0, 0)
         ab = tf.concat(abls, -2)
         abls = tf.split(ab, ab.shape[-2] // 8, -2)
         abi = tf.concat(abls, 0)
