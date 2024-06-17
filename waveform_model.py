@@ -33,10 +33,11 @@ waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
-print('test')
 dummy_input = tf.random.normal([6, 256, 128])
 res = waveform_model(dummy_input)
-print(res.shape)
+S, P = res
+print(S.shape)
+print(P.shape)
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)
