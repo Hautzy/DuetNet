@@ -454,6 +454,7 @@ class Utils_functions:
         return tf.concat(outls, 0)
 
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
+        print(inp.shape)
 
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
         abls = tf.split(ab, ab.shape[0], 0)
