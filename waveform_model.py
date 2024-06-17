@@ -27,12 +27,12 @@ M = Models_functions(args)
 models_ls = M.get_networks()
 critic, gen, enc, dec, enc2, dec2, gen_ema, [opt_dec, opt_disc], switch = models_ls
 
-input_tensor = Input(shape=(1, 128, 128))
+input_tensor = Input(shape=(128, 128))
 waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
-waveform_model.build(input_shape=(1, 128, 128))
+waveform_model.build(input_shape=(None, 128, 128))
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)
