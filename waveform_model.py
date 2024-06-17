@@ -15,7 +15,12 @@ class GenerateWaveformLayer(Layer):
         self.dec2 = dec2
 
     def call(self, inputs):
-        return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
+        res = U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
+        S, P = res
+        print('Result')
+        print(S.shape)
+        print(P.shape)
+        return res
 
 
 export_folder = 'exported_models'
