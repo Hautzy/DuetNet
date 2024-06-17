@@ -447,7 +447,9 @@ class Utils_functions:
         print(bdim)
         if bdim == 1:
             bdim = 2
+        print(f'range: {((bdim - 2) // bs) + 1}')
         for i in range(((bdim - 2) // bs) + 1):
+            print(i)
             outls.append(model(x[i * bs: i * bs + bs], training=False))
         return tf.concat(outls, 0)
 
