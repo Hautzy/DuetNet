@@ -14,7 +14,7 @@ class Wv2SpecLayer(Layer):
         self.hopsize = hopsize
     def call(self, inputs):
         if inputs.shape[0] is None:
-            inputs = tf.random.normal([128, 2])
+            inputs = tf.random.normal([1049344, 2])
         res = U.wv2spec_hop((inputs[:, 0] + inputs[:, 1]) / 2.0, self.topdb, self.hopsize * 2)
         print('Result')
         print(res.shape)
