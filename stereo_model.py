@@ -5,6 +5,7 @@ from parse.parse_generate import parse_args
 from models import Models_functions
 from utils import Utils_functions
 
+
 class GenerateStereoLayer(Layer):
     def __init__(self, model_ls, **kwargs):
         super(GenerateStereoLayer, self).__init__(**kwargs)
@@ -12,6 +13,7 @@ class GenerateStereoLayer(Layer):
 
     def call(self, inputs):
         return U.generate_example_stereo(self.model_ls)
+
 
 export_folder = 'exported_models'
 

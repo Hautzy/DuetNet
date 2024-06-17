@@ -467,12 +467,20 @@ class Utils_functions:
             )
             abls = tf.split(ab, ab.shape[-2] // self.args.shape, -2)
             ab = tf.concat(abls, 0)
-
             ab_m, ab_p = self.distribute_dec(ab, dec, bs=batch_size)
+            S, P = self.conc_tog_specphase(ab_m, ab_p)
+            chls.append((S, P))
+
+        S = tf.stack([ch[0] for ch in chls], -1)
+        P = tf.stack([ch[1] for ch in chls], -1)
+
+        return S, P
+        '''
             abwv = self.conc_tog_specphase(ab_m, ab_p)
             chls.append(abwv)
 
         return np.clip(np.squeeze(np.stack(chls, -1)), -1.0, 1.0)
+        '''
 
     def decode_waveform(self, lat, dec, dec2, batch_size=64):
 
