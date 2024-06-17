@@ -39,7 +39,8 @@ waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
 print('test')
 dummy_input = tf.random.normal([6, 256, 128])
-_ = waveform_model(dummy_input)
+res = waveform_model(dummy_input)
+print(res.shape)
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)

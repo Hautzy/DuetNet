@@ -446,19 +446,15 @@ class Utils_functions:
     def distribute_gen(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
-        print(bdim)
         if bdim == 1:
             bdim = 2
-        print(bdim)
-        print(f'range: {((bdim - 2) // bs) + 1}')
         for i in range(((bdim - 2) // bs) + 1):
             print(i)
             outls.append(model(x[i * bs: i * bs + bs], training=False))
         return tf.concat(outls, 0)
 
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
-        print(inp.shape)
-
+        print('Generating waveform...')
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
         dim0 = inp.shape[0]
         if dim0 is None:
@@ -484,6 +480,7 @@ class Utils_functions:
         S = tf.stack([ch[0] for ch in chls], -1)
         P = tf.stack([ch[1] for ch in chls], -1)
 
+        print('Done generationg waveform...')
         return S, P
         '''
             abwv = self.conc_tog_specphase(ab_m, ab_p)
