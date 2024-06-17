@@ -33,6 +33,7 @@ waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
+print('test')
 dummy_input = tf.random.normal([6, 256, 128])
 _ = waveform_model(dummy_input)
 
