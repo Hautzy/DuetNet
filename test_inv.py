@@ -24,16 +24,39 @@ class InverseSTFTLayer(Layer):
         SP_real = S_real * exp_real - S_imag * exp_imag
         SP_imag = S_real * exp_imag + S_imag * exp_real
 
-        SP = tf.complex(SP_real, SP_imag)
+        # Initialize empty lists to collect real and imaginary parts of frames
+        frames_real = []
+        frames_imag = []
 
-        wv = tf.signal.inverse_stft(
-            SP,
-            frame_step=self.hop_length,
-            frame_length=self.frame_length,
-            fft_length=self.fft_length,
-            window_fn=tf.signal.inverse_stft_window_fn(self.hop_length)
-        )
-        return wv
+        for i in range(SP_real.shape[1]):
+            real_part = SP_real[:, i, :]
+            imag_part = SP_imag[:, i, :]
+
+            # Perform inverse FFT on real and imaginary parts separately
+            time_frame_real = tf.signal.irfft(real_part, fft_length=self.fft_length)
+            time_frame_imag = tf.signal.irfft(imag_part, fft_length=self.fft_length)
+
+            frames_real.append(time_frame_real)
+            frames_imag.append(time_frame_imag)
+
+        frames_real = tf.stack(frames_real, axis=1)
+        frames_imag = tf.stack(frames_imag, axis=1)
+
+        # Overlap and add frames to reconstruct the signal
+        num_frames = tf.shape(frames_real)[1]
+        frame_length = tf.shape(frames_real)[2]
+        signal_length = num_frames * self.hop_length + frame_length - self.hop_length
+        signal_real = tf.zeros([tf.shape(frames_real)[0], signal_length])
+        signal_imag = tf.zeros([tf.shape(frames_imag)[0], signal_length])
+
+        for i in range(num_frames):
+            start = i * self.hop_length
+            signal_real[:, start:start + frame_length] += frames_real[:, i, :]
+            signal_imag[:, start:start + frame_length] += frames_imag[:, i, :]
+
+        # Combine the real and imaginary parts at the end
+        signal = tf.sqrt(signal_real ** 2 + signal_imag ** 2)
+        return signal
 
 
 # Define the model
