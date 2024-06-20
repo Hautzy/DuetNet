@@ -1,90 +1,96 @@
 import tensorflow as tf
-
-from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Layer, Input
+from tensorflow.keras.models import Model
 
 
-class InverseSTFTLayer(Layer):
-    def __init__(self, hop_length, frame_length, fft_length):
-        super(InverseSTFTLayer, self).__init__()
-        self.hop_length = hop_length
+class CustomInverseSTFT(Layer):
+    def __init__(self, frame_length, frame_step, fft_length, **kwargs):
+        super(CustomInverseSTFT, self).__init__(**kwargs)
         self.frame_length = frame_length
+        self.frame_step = frame_step
         self.fft_length = fft_length
 
     def call(self, inputs):
-        S, P = inputs
+        S_real, S_imag = inputs
+        return self.custom_inverse_stft(S_real, S_imag)
 
-        P_real = tf.cast(P, tf.float32)
-        exp_real = tf.math.cos(P_real)
-        exp_imag = tf.math.sin(P_real)
+    def custom_inverse_stft(self, S_real, S_imag):
+        """
+        Custom inverse STFT function that handles real and imaginary parts separately.
+        Args:
+        - S_real (Tensor): Real part of the STFT result.
+        - S_imag (Tensor): Imaginary part of the STFT result.
 
-        S_real = tf.cast(S, tf.float32)
-        S_imag = tf.zeros_like(S_real)
+        Returns:
+        - Tensor: Reconstructed time-domain signal.
+        """
 
-        SP_real = S_real * exp_real - S_imag * exp_imag
-        SP_imag = S_real * exp_imag + S_imag * exp_real
+        def manual_ifft(real, imag, fft_length):
+            """
+            Perform an inverse FFT manually on the real and imaginary parts.
+            """
+            n = tf.cast(tf.shape(real)[-1], tf.float32)
+            k = tf.range(0, fft_length, dtype=tf.float32)
+            k = tf.reshape(k, (1, -1))
+            exp_term_real = tf.cos(2.0 * tf.constant(np.pi) * k / n)
+            exp_term_imag = tf.sin(2.0 * tf.constant(np.pi) * k / n)
 
-        # Initialize empty lists to collect real and imaginary parts of frames
-        frames_real = []
-        frames_imag = []
+            real_ifft = tf.matmul(real, exp_term_real) - tf.matmul(imag, exp_term_imag)
+            imag_ifft = tf.matmul(real, exp_term_imag) + tf.matmul(imag, exp_term_real)
 
-        for i in range(SP_real.shape[1]):
-            real_part = SP_real[:, i, :]
-            imag_part = SP_imag[:, i, :]
+            return real_ifft / n, imag_ifft / n
 
-            # Perform inverse FFT on real and imaginary parts separately
-            time_frame_real = tf.signal.irfft(real_part, fft_length=self.fft_length)
-            time_frame_imag = tf.signal.irfft(imag_part, fft_length=self.fft_length)
+        # Number of frames and length of each frame
+        num_frames = tf.shape(S_real)[0]
 
-            frames_real.append(time_frame_real)
-            frames_imag.append(time_frame_imag)
+        # Hann window function
+        window = tf.signal.hann_window(self.frame_length, periodic=True)
 
-        frames_real = tf.stack(frames_real, axis=1)
-        frames_imag = tf.stack(frames_imag, axis=1)
+        # Initialize the output signal array
+        output_length = self.frame_step * (num_frames - 1) + self.frame_length
+        output_signal = tf.zeros([output_length], dtype=tf.float32)
+        window_correction = tf.zeros([output_length], dtype=tf.float32)
 
-        # Overlap and add frames to reconstruct the signal
-        num_frames = tf.shape(frames_real)[1]
-        frame_length = tf.shape(frames_real)[2]
-        signal_length = num_frames * self.hop_length + frame_length - self.hop_length
-        signal_real = tf.zeros([tf.shape(frames_real)[0], signal_length])
-        signal_imag = tf.zeros([tf.shape(frames_imag)[0], signal_length])
-
+        # Perform the inverse FFT manually and overlap-add
         for i in range(num_frames):
-            start = i * self.hop_length
-            signal_real[:, start:start + frame_length] += frames_real[:, i, :]
-            signal_imag[:, start:start + frame_length] += frames_imag[:, i, :]
+            # Reconstruct the time-domain frame using manual IFFT
+            real_ifft, imag_ifft = manual_ifft(S_real[i], S_imag[i], self.fft_length)
 
-        # Combine the real and imaginary parts at the end
-        signal = tf.sqrt(signal_real ** 2 + signal_imag ** 2)
-        return signal
+            # Combine real and imaginary parts (imag part should be zero ideally)
+            time_frame = real_ifft - imag_ifft
+
+            # Apply window function
+            time_frame = time_frame * window
+
+            # Overlap-add the frame into the output signal
+            start = i * self.frame_step
+            for j in range(self.frame_length):
+                output_signal = tf.tensor_scatter_nd_add(output_signal, [[start + j]], [time_frame[j]])
+                window_correction = tf.tensor_scatter_nd_add(window_correction, [[start + j]], [window[j]])
+
+        # Correct for the windowing
+        output_signal = output_signal / tf.maximum(window_correction, 1e-8)
+
+        return output_signal
 
 
-# Define the model
-class CustomModel(Model):
-    def __init__(self, hop_length, frame_length, fft_length):
-        super(CustomModel, self).__init__()
-        self.inverse_stft_layer = InverseSTFTLayer(hop_length, frame_length, fft_length)
+# Example usage
+S = tf.random.uniform([100, 256], dtype=tf.float32)  # Magnitude spectrogram
+P = tf.random.uniform([100, 256], dtype=tf.float32) * 2 * tf.constant(np.pi)  # Phase spectrogram
 
-    def call(self, inputs):
-        return self.inverse_stft_layer(inputs)
+# Separate the real and imaginary parts
+S_real = S * tf.math.cos(P)
+S_imag = S * tf.math.sin(P)
 
+frame_length = 256
+frame_step = 64
+fft_length = 256
 
-# Instantiate the model
-hop_length = 256
-frame_length = 4 * hop_length
-fft_length = 4 * hop_length
+# Define the model with the custom layer
+inputs_real = Input(shape=(None, fft_length))
+inputs_imag = Input(shape=(None, fft_length))
+outputs = CustomInverseSTFT(frame_length, frame_step, fft_length)([inputs_real, inputs_imag])
+model = Model(inputs=[inputs_real, inputs_imag], outputs=outputs)
 
-model = CustomModel(hop_length, frame_length, fft_length)
-
-# Dummy inputs
-S = tf.random.uniform([2, 100, 129], dtype=tf.float32)
-P = tf.random.uniform([2, 100, 129], dtype=tf.float32)
-
-# Call the model
-output = model((S, P))
-
-# Save the model
-model.save('inverse_stft_model')
-
-# Verify the shape of the output
-print(output.shape)
+# Perform the custom inverse STFT using the model
+custom_wv = model([S_real, S_imag])
