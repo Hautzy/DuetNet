@@ -13,6 +13,11 @@ class CustomInverseSTFT(Layer):
 
     def call(self, inputs):
         S_real, S_imag = inputs
+        if S_real.shape[0] is None:
+            S = tf.random.uniform([100, 256], dtype=tf.float32)  # Magnitude spectrogram
+            P = tf.random.uniform([100, 256], dtype=tf.float32) * 2 * tf.constant(np.pi)  # Phase spectrogram
+            S_real = S * tf.math.cos(P)
+            S_imag = S * tf.math.sin(P)
         return self.custom_inverse_stft(S_real, S_imag)
 
     def custom_inverse_stft(self, S_real, S_imag):
@@ -30,19 +35,20 @@ class CustomInverseSTFT(Layer):
             """
             Perform an inverse FFT manually on the real and imaginary parts.
             """
-            n = tf.cast(tf.shape(real)[-1], tf.float32)
+            n = tf.cast(fft_length, tf.float32)
             k = tf.range(0, fft_length, dtype=tf.float32)
             k = tf.reshape(k, (1, -1))
-            exp_term_real = tf.cos(2.0 * tf.constant(np.pi) * k / n)
-            exp_term_imag = tf.sin(2.0 * tf.constant(np.pi) * k / n)
+            m = tf.range(0, fft_length, dtype=tf.float32)
+            m = tf.reshape(m, (-1, 1))
+            exp_term_real = tf.cos(2.0 * tf.constant(np.pi) * m * k / n)
+            exp_term_imag = tf.sin(2.0 * tf.constant(np.pi) * m * k / n)
 
-            real_ifft = tf.matmul(real, exp_term_real) - tf.matmul(imag, exp_term_imag)
-            imag_ifft = tf.matmul(real, exp_term_imag) + tf.matmul(imag, exp_term_real)
-
+            real_ifft = tf.linalg.matvec(real, exp_term_real) - tf.linalg.matvec(imag, exp_term_imag)
+            imag_ifft = tf.linalg.matvec(real, exp_term_imag) + tf.linalg.matvec(imag, exp_term_real)
             return real_ifft / n, imag_ifft / n
 
         # Number of frames and length of each frame
-        num_frames = tf.shape(S_real)[0]
+        num_frames = S_real.shape[0]
 
         # Hann window function
         window = tf.signal.hann_window(self.frame_length, periodic=True)
@@ -73,7 +79,6 @@ class CustomInverseSTFT(Layer):
         output_signal = output_signal / tf.maximum(window_correction, 1e-8)
 
         return output_signal
-
 
 # Example usage
 S = tf.random.uniform([100, 256], dtype=tf.float32)  # Magnitude spectrogram
