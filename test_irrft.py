@@ -12,9 +12,9 @@ class IRFFTLayer(Layer):
         S = tf.random.normal(shape=(513, 2))
         P = tf.random.normal(shape=(513, 2))
 
-        #real_part = S * tf.cos(P)  # Real component
-        #imag_part = S * tf.sin(P)  # Imaginary component
-        complex_tensor = tf.complex(S, P)
+        real_part = S * tf.cos(P)  # Real component
+        imag_part = S * tf.sin(P)  # Imaginary component
+        complex_tensor = tf.complex(real_part, imag_part)
         return tf.signal.irfft(complex_tensor)
 
 
