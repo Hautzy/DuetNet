@@ -8,17 +8,26 @@ class IRFFTLayer(Layer):
         super(IRFFTLayer, self).__init__()
 
     def call(self, inputs):
-        real_tensor = tf.random.normal(shape=(513, 2))
-        imag_tensor = tf.random.normal(shape=(513, 2))
+        hop = 256
+        S = tf.random.normal(shape=(513, 2))
+        P = tf.random.normal(shape=(513, 2))
 
-        test = tf.complex(real_tensor, imag_tensor)
-        return tf.signal.irfft(test)
+        real_part = S * tf.cos(P)  # Real component
+        imag_part = S * tf.sin(P)  # Imaginary component
+        complex_tensor = tf.complex(real_part, imag_part)
+        return tf.signal.inverse_stft(
+            complex_tensor,
+            4 * hop,
+            hop,
+            fft_length=4 * hop,
+            window_fn=tf.signal.inverse_stft_window_fn(hop),
+        )
 
 
 input_tensor = Input(shape=(1,))
 custom_layer = IRFFTLayer()(input_tensor)  # Output is the result of the IRFFT
 
-model = tf.keras.Model(inputs=input_tensor, outputs=custom_layer)
+model = Model(inputs=input_tensor, outputs=custom_layer)
 
 model.build(input_shape=(None, 1))
 
