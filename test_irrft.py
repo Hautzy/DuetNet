@@ -15,7 +15,13 @@ class IRFFTLayer(Layer):
         real_part = S * tf.cos(P)  # Real component
         imag_part = S * tf.sin(P)  # Imaginary component
         complex_tensor = tf.complex(real_part, imag_part)
-        return tf.signal.irfft(complex_tensor)
+        return tf.signal.inverse_stft(
+            complex_tensor,
+            4 * hop,
+            hop,
+            fft_length=4 * hop,
+            window_fn=tf.signal.inverse_stft_window_fn(hop),
+        )
 
 
 input_tensor = Input(shape=(1,))
