@@ -18,7 +18,7 @@ class IRFFTLayer(Layer):
 
 
 # Combine them into a complex tensor
-input_tensor = Input(shape=(513, 2))
+input_tensor = Input(shape=(2))
 custom_layer = IRFFTLayer()(input_tensor)  # Output is the result of the IRFFT
 
 model = tf.keras.Model(inputs=input_tensor, outputs=custom_layer)
