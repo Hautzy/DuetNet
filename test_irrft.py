@@ -14,6 +14,7 @@ class IRFFTLayer(Layer):
         # Perform the inverse real FFT
         real_frames = tf.signal.irfft(complex_spectrogram, fft_length=[frame_length])
 
+        '''
         # Apply the window function
         window = window_fn(frame_length, dtype=tf.float32)
         windowed_frames = real_frames * window
@@ -22,6 +23,8 @@ class IRFFTLayer(Layer):
         reconstructed_signal = tf.signal.overlap_and_add(windowed_frames, frame_step)
 
         return reconstructed_signal
+        '''
+        return real_frames
 
     def call(self, inputs):
         hop = 256
