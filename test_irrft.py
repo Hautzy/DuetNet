@@ -11,8 +11,8 @@ class IRFFTLayer(Layer):
         real_tensor = tf.random.normal(shape=(513, 2))
         imag_tensor = tf.random.normal(shape=(513, 2))
 
-        inputs = tf.complex(real_tensor, imag_tensor)
-        return tf.signal.irfft(inputs)
+        test = tf.complex(real_tensor, imag_tensor)
+        return tf.signal.irfft(test)
 
 
 input_tensor = Input(shape=(1,))
