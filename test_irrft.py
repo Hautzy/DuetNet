@@ -9,7 +9,7 @@ class IRFFTLayer(Layer):
 
     def manual_inverse_stft(self, complex_spectrogram, frame_length, frame_step):
         # Use the complementary window function
-        window_fn = tf.signal.inverse_stft_window_fn(frame_step)
+        # window_fn = tf.signal.inverse_stft_window_fn(frame_step)
 
         # Perform the inverse real FFT
         real_frames = tf.signal.irfft(complex_spectrogram, fft_length=[frame_length])
