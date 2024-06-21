@@ -9,7 +9,10 @@ class IRFFTLayer(Layer):
 
     def call(self, inputs):
         if inputs.shape[0] is None:
-            inputs = tf.random.normal(shape=(513, 2), dtype=tf.complex64)
+            real_tensor = tf.random.normal(shape=(513, 2))
+            imag_tensor = tf.random.normal(shape=(513, 2))
+
+            inputs = tf.complex(real_tensor, imag_tensor)
         # Apply IRFFT. The input is expected to be a complex tensor suitable for IRFFT
         return tf.signal.irfft(inputs)
 
