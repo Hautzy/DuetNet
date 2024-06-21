@@ -1,7 +1,9 @@
 import tensorflow as tf
+from tensorflow.keras.layers import Layer, Input
+from tensorflow.keras.models import Model
 
 # Define a custom layer that applies IRFFT
-class IRFFTLayer(tf.keras.layers.Layer):
+class IRFFTLayer(Layer):
     def __init__(self):
         super(IRFFTLayer, self).__init__()
 
@@ -11,21 +13,22 @@ class IRFFTLayer(tf.keras.layers.Layer):
         # Apply IRFFT. The input is expected to be a complex tensor suitable for IRFFT
         return tf.signal.irfft(inputs)
 
-# Create a model that uses the IRFFT layer
-# Input shape is designed for IRFFT input requirements
-inputs = tf.keras.Input(shape=(513, 2), dtype=tf.complex64)
-custom_layer = IRFFTLayer()(inputs)  # Output is the result of the IRFFT
 
-model = tf.keras.Model(inputs=inputs, outputs=custom_layer)
+# Combine them into a complex tensor
+input_tensor = Input(shape=(513, 2))
+custom_layer = IRFFTLayer()(input_tensor)  # Output is the result of the IRFFT
 
-# Since the output of IRFFT is real, there's no need to compile the model if it's only for inference
-# However, if you want to train this model, you should compile it with a real-valued loss function
-# Example: model.compile(optimizer='adam', loss='mean_squared_error')
+model = tf.keras.Model(inputs=input_tensor, outputs=custom_layer)
 
-model.build(input_shape=(513, 2))
+real_tensor = tf.random.normal(shape=(513, 2))
+imag_tensor = tf.random.normal(shape=(513, 2))
 
-# Save the model
-model_path = 'saved_model_irfft_only'
-model.save(model_path)
+input = tf.complex(real_tensor, imag_tensor)
 
-print("Model saved to:", model_path)
+res = model(input)
+
+print(res.shape)
+
+model.save('saved_model_irfft_only')
+
+print("Model saved")
