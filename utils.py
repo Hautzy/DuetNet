@@ -53,8 +53,10 @@ class Utils_functions:
         else:
             Sls = tf.split(S, S.shape[0], 0)
             S = tf.squeeze(tf.concat(Sls, 1), 0)
+            print('S ', S.shape)
             Pls = tf.split(P, P.shape[0], 0)
             P = tf.squeeze(tf.concat(Pls, 1), 0)
+            print('P ', P.shape)
         return S, P
         '''
         SP = tf.cast(S, tf.complex64) * tf.math.exp(1j * tf.cast(P, tf.complex64))
@@ -301,14 +303,17 @@ class Utils_functions:
             [opt_dec, opt_disc],
             switch,
         ) = models_ls
+        print('begin generate_example_stereo')
         inp = self.get_noise_interp()
-        print(inp.shape)
+        print('noise ', inp.shape)
         abb = gen_ema(inp, training=False)
+        print('abb ', abb.shape)
         abbls = tf.split(abb, abb.shape[-2] // 8, -2)
         abb = tf.concat(abbls, 0)
 
         chls = []
         for channel in range(2):
+            print('channel ', channel)
             ab = self.distribute_dec2(
                 abb[
                 :,
@@ -318,14 +323,23 @@ class Utils_functions:
                 ],
                 dec2,
             )
+            print('ab ', ab.shape)
             abls = tf.split(ab, ab.shape[-2] // self.args.shape, -2)
             ab = tf.concat(abls, 0)
             ab_m, ab_p = self.distribute_dec(ab, dec)
+            print('ab m ', ab_m.shape)
+            print('ab p ', ab_p.shape)
             S, P = self.conc_tog_specphase(ab_m, ab_p)
+            print('S ', S.shape)
+            print('P ', P.shape)
             chls.append((S, P))
 
         S = tf.stack([ch[0] for ch in chls], -1)
         P = tf.stack([ch[1] for ch in chls], -1)
+
+        print('stacked')
+        print('S ', S.shape)
+        print('P ', P.shape)
 
         return S, P
 
