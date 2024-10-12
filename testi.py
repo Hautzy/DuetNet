@@ -1,42 +1,44 @@
 import tensorflow as tf
-
-'''
-hop = 256
-
-frame_length = 4 * hop
-frame_step = hop
-
-window_fn = tf.signal.inverse_stft_window_fn(frame_step)
-
-P = tf.random.normal(shape=(4096, 513))
-S = tf.random.normal(shape=(4096, 513))
-
-real_part = S * tf.cos(P)
-imag_part = S * tf.sin(P)
-SP = tf.complex(real_part, imag_part)
-print('SP: ', SP.shape)
-frames = tf.signal.irfft(SP, fft_length=[4 * hop])
-
-window = window_fn(frame_length, dtype=tf.float32)
-windowed_frames = frames * window
-
-# Overlap-and-add to reconstruct the time-domain signal
-reconstructed_signal = tf.signal.overlap_and_add(windowed_frames, frame_step)
-print(reconstructed_signal.shape)
-'''
-
-
+from scipy.io.wavfile import write as write_wav
 import numpy as np
-import tensorflow as tf
+from parse.parse_generate import parse_args
+from utils import Utils_functions
+import json
+import matplotlib.pyplot as plt
 
-# Example data
-chls_np = [np.array([1, 2, 3]), np.array([4, 5, 6])]
-chls_tf = [tf.constant([1, 2, 3]), tf.constant([4, 5, 6])]
+args = parse_args()
 
-# NumPy stack
-stacked_np = np.stack(chls_np, axis=-1)
-print('NumPy stacked shape:', stacked_np.shape)  # Output: (3, 2)
+U = Utils_functions(args)
 
-# TensorFlow stack
-stacked_tf = tf.stack(chls_tf, axis=-1)
-print('TensorFlow stacked shape:', stacked_tf.shape)  # Output: (3, 2)
+# read json file and convert into 2d tensor
+# Load the tensor data from the JSON file
+with open('tensor.json', 'r') as file:
+    tensor_data = json.load(file)
+
+# Convert the list of lists into a TensorFlow tensor
+tensor = tf.constant(tensor_data)
+
+# Verify the tensor
+print(f'Tensor shape: {tensor.shape}')
+print(f'Tensor dtype: {tensor.dtype}')
+print(tensor)
+
+write_wav(f"out.wav", 44100, np.squeeze(tensor))
+
+# Prepare the data for plotting
+data = np.flip(
+    np.array(
+        tf.transpose(
+            U.wv2spec_hop((tensor[:, 0] + tensor[:, 1]) / 2.0, 80.0, args.hop * 2),
+            [1, 0],
+        )
+    ),
+    -2,
+)
+
+# Create a single plot
+fig, ax = plt.subplots(figsize=(20, 20))
+ax.imshow(data, cmap=None)
+ax.axis("off")
+ax.set_title("Generated1")
+plt.show()
