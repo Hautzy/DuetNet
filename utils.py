@@ -465,10 +465,12 @@ class Utils_functions:
     '''
 
     def truncated_normal(self, shape, bound=2.0, dtype=tf.float32):
-        # Generate a single seed tensor of shape [2]
-        seed = tf.random.uniform([2], maxval=tf.int32.max, dtype=tf.int32)
-        # Use the seed in the stateless truncated normal function
-        samples = tf.random.stateless_truncated_normal(shape, seed=seed, mean=0.0, stddev=1.0, dtype=dtype)
+        # Use stateful truncated normal without explicit seeds
+        samples = tf.random.truncated_normal(shape, mean=0.0, stddev=1.0, dtype=dtype)
+        # Adjust the samples to have the desired standard deviation if needed
+        desired_stddev = 1.0  # Adjust as necessary
+        desired_mean = 0.0  # Adjust as necessary
+        samples = samples * (desired_stddev / 1.0) + desired_mean
         # Clip the samples to the desired bounds
         samples = tf.clip_by_value(samples, -bound, bound)
         return samples
