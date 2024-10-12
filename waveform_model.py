@@ -16,6 +16,7 @@ class GenerateWaveformLayer(Layer):
 
     def call(self, inputs):
         if inputs.shape[0] is None:
+            print('dummy data input')
             inputs = tf.random.normal([6, 256, 128])
         res = U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
         print('res', res.shape)
@@ -25,8 +26,6 @@ class GenerateWaveformLayer(Layer):
 export_folder = 'exported_models'
 
 args = parse_args()
-
-args.load_path = 'checkpoints/techno'
 
 U = Utils_functions(args)
 

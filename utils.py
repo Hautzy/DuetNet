@@ -344,11 +344,6 @@ class Utils_functions:
         print('stacked', stacked.shape)
         return stacked
 
-    '''     wv = self.conc_tog_specphase(ab_m, ab_p)
-         chls.append(wv)
-
-     return tf.stack(chls, -1)'''
-
     # Save in training loop
     def save_test_image_full(self, path, models_ls=None):
 
