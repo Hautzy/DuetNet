@@ -725,6 +725,7 @@ class Models_functions:
         )
 
     def get_networks(self):
+        print('Loading model from loading_path=', self.args.load_path)
         if self.args.load_path != "None":
             (
                 critic,
