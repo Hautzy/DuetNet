@@ -1,12 +1,17 @@
 import tensorflow as tf
 from scipy.io.wavfile import write as write_wav
 import numpy as np
+
+from models import Models_functions
 from parse.parse_generate import parse_args
 from utils import Utils_functions
 import json
 import matplotlib.pyplot as plt
 
 args = parse_args()
+
+M = Models_functions(args)
+M.download_networks()
 
 U = Utils_functions(args)
 

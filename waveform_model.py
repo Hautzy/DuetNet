@@ -26,6 +26,8 @@ export_folder = 'exported_models'
 
 args = parse_args()
 
+args.load_path = 'checkpoints/techno'
+
 U = Utils_functions(args)
 
 M = Models_functions(args)
