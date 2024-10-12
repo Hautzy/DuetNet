@@ -39,8 +39,9 @@ class Utils_functions:
         with np.errstate(divide="ignore", invalid="ignore"):
             self.melmatinv = tf.constant(np.nan_to_num(np.divide(melmat.numpy().T, np.sum(melmat.numpy(), axis=1))).T)
 
-    # https://chatgpt.com/share/c594694f-f348-4287-85c6-184196b53148
     def conc_tog_specphase(self, S, P):
+        frame_step = self.args.hop
+        frame_length = self.args.hop * 4
         S = tf.cast(S, tf.float32)
         P = tf.cast(P, tf.float32)
         S = self.denormalize(S, clip=False)
@@ -48,27 +49,33 @@ class Utils_functions:
         P = P * np.pi
 
         if P.shape[0] is None:
-            S = tf.zeros([1, S.shape[1], S.shape[2]])
-            P = tf.zeros([1, P.shape[1], P.shape[2]])
-        else:
-            Sls = tf.split(S, S.shape[0], 0)
-            S = tf.squeeze(tf.concat(Sls, 1), 0)
-            print('S ', S.shape)
-            Pls = tf.split(P, P.shape[0], 0)
-            P = tf.squeeze(tf.concat(Pls, 1), 0)
-            print('P ', P.shape)
-        return S, P
-        '''
-        SP = tf.cast(S, tf.complex64) * tf.math.exp(1j * tf.cast(P, tf.complex64))
-        wv = tf.signal.inverse_stft(
-            SP,
-            4 * self.args.hop,
-            self.args.hop,
-            fft_length=4 * self.args.hop,
-            window_fn=tf.signal.inverse_stft_window_fn(self.args.hop),
-        )
-        return tf.squeeze(wv)
-        '''
+            return tf.zeros([4096, 513])
+
+        Sls = tf.split(S, S.shape[0], 0)
+        S = tf.squeeze(tf.concat(Sls, 1), 0)
+        print('S ', S.shape)
+        Pls = tf.split(P, P.shape[0], 0)
+        P = tf.squeeze(tf.concat(Pls, 1), 0)
+        print('P ', P.shape)
+        real_part = S * tf.cos(P)  # Real component
+        imag_part = S * tf.sin(P)  # Imaginary component
+        SP = tf.complex(real_part, imag_part)
+        # Use the complementary window function
+        window_fn = tf.signal.inverse_stft_window_fn(frame_step)
+
+        # Perform the inverse real FFT
+        real_frames = tf.signal.irfft(SP, fft_length=[frame_length])
+
+        # Apply the window function
+        window = window_fn(frame_length, dtype=tf.float32)
+        windowed_frames = real_frames * window
+
+        # Overlap-and-add to reconstruct the time-domain signal
+        wv = tf.signal.overlap_and_add(windowed_frames, frame_step)
+        print('wv', wv.shape)
+        wv_squeezed = tf.squeeze(wv)
+        print('wv_squeezed', wv_squeezed.shape)
+        return wv_squeezed
 
     def _tf_log10(self, x):
         numerator = tf.math.log(x)
@@ -329,19 +336,13 @@ class Utils_functions:
             ab_m, ab_p = self.distribute_dec(ab, dec)
             print('ab m ', ab_m.shape)
             print('ab p ', ab_p.shape)
-            S, P = self.conc_tog_specphase(ab_m, ab_p)
-            print('S ', S.shape)
-            print('P ', P.shape)
-            chls.append((S, P))
+            wv = self.conc_tog_specphase(ab_m, ab_p)
+            print('wv ', wv.shape)
+            chls.append(wv)
 
-        S = tf.stack([ch[0] for ch in chls], -1)
-        P = tf.stack([ch[1] for ch in chls], -1)
-
-        print('stacked')
-        print('S ', S.shape)
-        print('P ', P.shape)
-
-        return S, P
+        stacked = tf.stack(chls, -1)
+        print('stacked', stacked.shape)
+        return stacked
 
     '''     wv = self.conc_tog_specphase(ab_m, ab_p)
          chls.append(wv)
@@ -499,20 +500,20 @@ class Utils_functions:
             abls = tf.split(ab, ab.shape[-2] // self.args.shape, -2)
             ab = tf.concat(abls, 0)
             ab_m, ab_p = self.distribute_dec(ab, dec, bs=batch_size)
-            S, P = self.conc_tog_specphase(ab_m, ab_p)
-            chls.append((S, P))
-
-        S = tf.stack([ch[0] for ch in chls], -1)
-        P = tf.stack([ch[1] for ch in chls], -1)
-
-        print('Done generationg waveform...')
-        return S, P
-        '''
             abwv = self.conc_tog_specphase(ab_m, ab_p)
             chls.append(abwv)
 
-        return np.clip(np.squeeze(np.stack(chls, -1)), -1.0, 1.0)
-        '''
+        # Stack the tensors along the last axis
+        stacked = tf.stack(chls, axis=-1)
+
+        # Squeeze to remove dimensions of size 1
+        squeezed = tf.squeeze(stacked)
+
+        # Clip values to the range [-1.0, 1.0]
+        clipped = tf.clip_by_value(squeezed, -1.0, 1.0)
+
+        return clipped
+
 
     def decode_waveform(self, lat, dec, dec2, batch_size=64):
 
