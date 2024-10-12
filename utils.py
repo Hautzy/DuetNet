@@ -468,17 +468,9 @@ class Utils_functions:
         seed1, seed2 = tf.random.get_global_generator().make_seeds(2)
         # Sample from a standard truncated normal distribution (mean=0, stddev=1, truncated at [-2, 2])
         samples = tf.random.stateless_truncated_normal(shape, seed=[seed1, seed2], dtype=dtype)
-        # Adjust the samples to have the desired standard deviation and bounds
-        desired_stddev = 1.0  # Adjust as needed
-        desired_mean = 0.0    # Adjust as needed
-        # Scale samples to have the desired standard deviation
-        samples = samples * (desired_stddev / 1.0)
-        # Shift samples to have the desired mean
-        samples = samples + desired_mean
         # Clip the samples to the desired bounds
         samples = tf.clip_by_value(samples, -bound, bound)
         return samples
-
 
     def distribute_gen(self, x, model, bs=32):
         outls = []
