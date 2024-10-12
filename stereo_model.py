@@ -22,6 +22,7 @@ args = parse_args()
 U = Utils_functions(args)
 
 M = Models_functions(args)
+M.download_networks()
 models_ls = M.get_networks()
 
 input_tensor = Input(shape=(1,))  # Dummy shape
