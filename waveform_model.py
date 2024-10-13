@@ -34,7 +34,8 @@ waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
-waveform_model.build(input_shape=(None, 256, 128))
+dummy_input = tf.zeros([6, 256, 128])  # A small real input with a batch size of 1
+waveform_model(dummy_input)
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)

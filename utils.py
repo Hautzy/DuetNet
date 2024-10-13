@@ -484,9 +484,6 @@ class Utils_functions:
         print('Generating waveform...')
         print(inp.shape)
 
-        if inp.shape[0] is None:
-            return tf.zeros([6292224, 2])
-
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
         abls = tf.split(ab, inp.shape[0], 0)
         ab = tf.concat(abls, -2)
