@@ -19,30 +19,36 @@ M.download_networks()
 models_ls = M.get_networks()
 critic, gen, enc, dec, enc2, dec2, gen_ema, [opt_dec, opt_disc], switch = models_ls
 
-# Define the Input layer with flexible batch size but fixed feature size (256, 128)
-input_tensor = Input(shape=(None, 256, 128))  # None for batch size
+# Force the batch size to be fixed during model building
+fixed_batch_size = 1  # Use a small fixed batch size to build the model
+input_tensor = Input(shape=(fixed_batch_size, 256, 128))  # No None, force fixed size
 
 # Define the waveform generation logic
 def generate_waveform_from_input(input_noise):
-    fac = (args.seconds // 23) + 1
     return U.generate_waveform(input_noise, gen_ema, dec, dec2, batch_size=64)
 
 # Apply the waveform generation function to the input tensor
 waveform_output = generate_waveform_from_input(input_tensor)
 
-# Create the Model
+# Create the Model with a fixed batch size
 waveform_model = Model(inputs=input_tensor, outputs=waveform_output)
 
-# Force the model to build with a fixed input shape (batch size = 1 for building)
-print('Forcing model build with batch size 1...')
-dummy_input = tf.random.normal(shape=(1, 256, 128))  # Fixed shape for building
+# Generate the fixed dummy input and build the model
+print('Forcing model build with a fixed batch size of 1...')
+dummy_input = tf.random.normal(shape=(6, 256, 128))  # Fixed shape for building
 waveform_model(dummy_input)  # This forces the internal graph to be built
 
-# After building, the model can accept variable batch sizes during inference
+# Now you can redefine the model to accept variable batch sizes (inference mode)
+# Create a new model with a flexible input batch size
+input_tensor_flexible = Input(shape=(None, 256, 128))  # Allow None for flexible batch size
+waveform_output_flexible = generate_waveform_from_input(input_tensor_flexible)
 
-# Ensure the export directory exists and save the model
+# Create the final model with a flexible batch size for inference
+waveform_model_flexible = Model(inputs=input_tensor_flexible, outputs=waveform_output_flexible)
+
+# Ensure the export directory exists and save the final flexible model
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)
 
-# Save the model for later use, including TensorFlow.js conversion
-waveform_model.save(f'./{export_folder}/waveform_model')
+# Save the flexible model for later use, including TensorFlow.js conversion
+waveform_model_flexible.save(f'./{export_folder}/waveform_model_flexible')
