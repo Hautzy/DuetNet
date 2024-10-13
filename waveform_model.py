@@ -17,10 +17,8 @@ class GenerateWaveformLayer(Layer):
     def call(self, inputs):
         if inputs.shape[0] is None:
             print('dummy data input')
-            inputs = tf.random.normal([6, 256, 128])
-        res = U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
-        print('res', res.shape)
-        return res
+            inputs = tf.zeros([6, 256, 128])
+        return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
 
 export_folder = 'exported_models'
@@ -39,9 +37,7 @@ waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
-dummy_input = tf.random.normal([6, 256, 128])
-res = waveform_model(dummy_input)
-print('res', res.shape)
+waveform_model.build(input_shape=(None, 256, 128))
 
 if not os.path.isdir(export_folder):
     os.mkdir(export_folder)

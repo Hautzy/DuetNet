@@ -48,9 +48,6 @@ class Utils_functions:
         S = tf.math.sqrt(self.db2power(S) + 1e-7)
         P = P * np.pi
 
-        if P.shape[0] is None:
-            return tf.zeros([4096, 513])
-
         Sls = tf.split(S, S.shape[0], 0)
         S = tf.squeeze(tf.concat(Sls, 1), 0)
         print('S ', S.shape)
@@ -213,8 +210,7 @@ class Utils_functions:
     def distribute_dec(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
-        if bdim is None:
-            bdim = 6
+        print('bdim ', bdim)
         for i in range(((bdim - 2) // bs) + 1):
             inp = x[i * bs: i * bs + bs]
             inpls = tf.split(inp, 2, -2)
@@ -229,8 +225,7 @@ class Utils_functions:
     def distribute_dec2(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
-        if bdim is None:
-            bdim = 6
+        print('bdim ', bdim)
         for i in range(((bdim - 2) // bs) + 1):
             inp1 = x[i * bs: i * bs + bs]
             inpls = tf.split(inp1, 2, -2)
@@ -489,11 +484,9 @@ class Utils_functions:
 
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
         print('Generating waveform...')
+        print(inp.shape)
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
-        dim0 = inp.shape[0]
-        if dim0 is None:
-            dim0 = 6
-        abls = tf.split(ab, dim0, 0)
+        abls = tf.split(ab, inp.shape[0], 0)
         ab = tf.concat(abls, -2)
         abls = tf.split(ab, ab.shape[-2] // 8, -2)
         abi = tf.concat(abls, 0)
