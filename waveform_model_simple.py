@@ -36,7 +36,7 @@ waveform_model = Model(inputs=input_tensor, outputs=waveform_output)
 
 # Generate a fixed-size dummy input and build the model
 print('Building the model with fixed input data...')
-dummy_input = tf.random.normal(shape=(batch_size, 256, 128))  # Use the fixed batch size
+dummy_input = tf.random.normal(shape=(1, batch_size, 256, 128))  # Use the fixed batch size
 waveform_model(dummy_input)  # Build the model with the fixed input
 
 # Ensure the export directory exists
@@ -51,7 +51,8 @@ waveform_model.save(f'./{export_folder}/waveform_model')
 def run_inference(model, batch_size):
     # Generate real input noise with a fixed shape to pass to the model
     input_noise = U.get_noise_interp_multi(batch_size, args.truncation)
-    return model(input_noise)
+    reshaped_noise = tf.expand_dims(input_noise, axis=0)
+    return model(reshaped_noise)
 
 # Example inference with a batch size of 10
 batch_size = 10
