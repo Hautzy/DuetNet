@@ -18,7 +18,7 @@ class GenerateWaveformLayer(Layer):
         if inputs.shape[0] is None:
             print('Batch size is None, using a default batch size of 1 for inference.')
             # Use tf.zeros with a valid shape to avoid breaking the model
-            inputs = tf.zeros([6, 256, 128])
+            return tf.zeros([6292224, 2])
         return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
 
