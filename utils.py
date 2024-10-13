@@ -474,29 +474,15 @@ class Utils_functions:
         return samples
 
     def distribute_gen(self, x, model, bs=32):
-        bdim = tf.shape(x)[0]  # Dynamically retrieve batch dimension
-
-        # Use tf.cond to check if bdim is 1 and set to 2 if true
-        bdim = tf.cond(bdim == 1, lambda: 2, lambda: bdim)
-
-        def cond(i, out_ta):
-            return i < ((bdim - 2) // bs) + 1
-
-        def body(i, out_ta):
-            inp = x[i * bs: (i + 1) * bs]
-            model_out = model(inp, training=False)
-            out_ta = out_ta.write(i, model_out)
-            return i + 1, out_ta
-
-        # Use TensorArray to store the results
-        out_ta = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
-
-        # Execute while loop
-        _, out_ta = tf.while_loop(cond, body, [0, out_ta])
-
-        # Concatenate the outputs
-        out = out_ta.concat()
-        return out
+        outls = []
+        bdim = tf.shape(x)[0]  # Use dynamic shape
+        print('bdim ', bdim)
+        if bdim == 1:
+            bdim = 2
+        for i in range(((bdim - 2) // bs) + 1):
+            print(i)
+            outls.append(model(x[i * bs: i * bs + bs], training=False))
+        return tf.concat(outls, 0)
 
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
         print('Generating waveform...')
@@ -509,20 +495,18 @@ class Utils_functions:
 
         abi = tf.concat(abls, 0)
 
-        def process_channel(channel):
+        chls = []
+        for channel in range(2):
             ab = self.distribute_dec2(
                 abi[:, :, :, channel * self.args.latdepth: channel * self.args.latdepth + self.args.latdepth],
                 dec2,
                 bs=batch_size,
             )
-            abls = tf.split(ab, tf.shape(ab)[-2] // self.args.shape, -2)
+            abls = tf.split(ab, tf.shape(ab)[-2] // self.args.shape, -2) # check for dynamic shape
             ab = tf.concat(abls, 0)
             ab_m, ab_p = self.distribute_dec(ab, dec, bs=batch_size)
             abwv = self.conc_tog_specphase(ab_m, ab_p)
-            return abwv
-
-        # Use tf.map_fn to apply the function across the two channels
-        chls = tf.map_fn(process_channel, tf.range(2), dtype=tf.float32)
+            chls.append(abwv)
 
         # Stack the tensors along the last axis
         stacked = tf.stack(chls, axis=-1)
