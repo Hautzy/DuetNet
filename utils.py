@@ -501,24 +501,13 @@ class Utils_functions:
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
         print('Generating waveform...')
         print(inp.shape)
-
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
+        abls = tf.split(ab, tf.shape(inp)[0], 0)    # check for dynamic shape
 
-        # Dynamically get the first dimension and check if it's valid
-        first_dim = tf.shape(inp)[0]
+        ab = tf.concat(abls, -2)
+        abls = tf.split(ab, tf.shape(ab)[-2] // 8, -2) # check for dynamic shape
 
-        # Check if first_dim is valid for splitting
-        first_dim = tf.cond(first_dim > 0, lambda: first_dim, lambda: 1)
-
-        # Now, split based on first_dim
-        abls = tf.split(ab, num_or_size_splits=first_dim, axis=0)
-
-        # Concatenate the split tensors
-        ab = tf.concat(abls, axis=-2)
-
-        # Further split the concatenated tensor
-        abls = tf.split(ab, tf.shape(ab)[-2] // 8, axis=-2)
-        abi = tf.concat(abls, axis=0)
+        abi = tf.concat(abls, 0)
 
         def process_channel(channel):
             ab = self.distribute_dec2(
@@ -526,7 +515,7 @@ class Utils_functions:
                 dec2,
                 bs=batch_size,
             )
-            abls = tf.split(ab, tf.shape(ab)[-2] // self.args.shape, axis=-2)
+            abls = tf.split(ab, tf.shape(ab)[-2] // self.args.shape, -2)
             ab = tf.concat(abls, 0)
             ab_m, ab_p = self.distribute_dec(ab, dec, bs=batch_size)
             abwv = self.conc_tog_specphase(ab_m, ab_p)
@@ -545,6 +534,7 @@ class Utils_functions:
         clipped = tf.clip_by_value(squeezed, -1.0, 1.0)
 
         return clipped
+
 
     def decode_waveform(self, lat, dec, dec2, batch_size=64):
 
