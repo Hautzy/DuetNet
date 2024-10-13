@@ -15,6 +15,9 @@ class GenerateWaveformLayer(Layer):
         self.dec2 = dec2
 
     def call(self, inputs):
+        if inputs.shape[0] is None:
+            print('dummy data input')
+            inputs = tf.zeros([6, 256, 128])
         return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
 
