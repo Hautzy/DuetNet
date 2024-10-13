@@ -26,7 +26,7 @@ input_tensor = Input(shape=(batch_size, 256, 128))  # No None value in the input
 
 # Define the waveform generation logic that requires fixed input sizes
 def generate_waveform_from_input(input_noise):
-    return U.generate_waveform(input_noise, gen_ema, dec, dec2, batch_size=64)
+    return U.generate_waveform(input_noise[0], gen_ema, dec, dec2, batch_size=64)
 
 # Apply the waveform generation function to the input tensor
 waveform_output = generate_waveform_from_input(input_tensor)
