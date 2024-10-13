@@ -38,8 +38,10 @@ waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
+fac = (args.seconds // 23) + 1
+
 print('Using actual data to build the model...')
-dummy_input = tf.ones([6, 256, 128])  # A small real input with a batch size of 1
+dummy_input = U.get_noise_interp_multi(fac, args.truncation)
 waveform_model(dummy_input)
 
 if not os.path.isdir(export_folder):
