@@ -473,8 +473,6 @@ class Utils_functions:
     def distribute_gen(self, x, model, bs=32):
         outls = []
         bdim = x.shape[0]
-        if bdim is None:
-            bdim = 6
         if bdim == 1:
             bdim = 2
         for i in range(((bdim - 2) // bs) + 1):
@@ -485,6 +483,10 @@ class Utils_functions:
     def generate_waveform(self, inp, gen_ema, dec, dec2, batch_size=64):
         print('Generating waveform...')
         print(inp.shape)
+
+        if inp.shape[0] is None:
+            return tf.zeros([6292224, 2])
+
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
         abls = tf.split(ab, inp.shape[0], 0)
         ab = tf.concat(abls, -2)
