@@ -48,15 +48,18 @@ class Utils_functions:
         S = tf.math.sqrt(self.db2power(S) + 1e-7)
         P = P * np.pi
 
-        Sls = tf.split(S, S.shape[0], 0)
+        # Use dynamic shapes
+        Sls = tf.split(S, tf.shape(S)[0], 0)
         S = tf.squeeze(tf.concat(Sls, 1), 0)
         print('S ', S.shape)
-        Pls = tf.split(P, P.shape[0], 0)
+        Pls = tf.split(P, tf.shape(P)[0], 0)
         P = tf.squeeze(tf.concat(Pls, 1), 0)
         print('P ', P.shape)
+
         real_part = S * tf.cos(P)  # Real component
         imag_part = S * tf.sin(P)  # Imaginary component
         SP = tf.complex(real_part, imag_part)
+
         # Use the complementary window function
         window_fn = tf.signal.inverse_stft_window_fn(frame_step)
 
@@ -209,7 +212,7 @@ class Utils_functions:
 
     def distribute_dec(self, x, model, bs=32):
         outls = []
-        bdim = x.shape[0]
+        bdim = tf.shape(x)[0]  # Use dynamic shape
         print('bdim ', bdim)
         for i in range(((bdim - 2) // bs) + 1):
             inp = x[i * bs: i * bs + bs]
@@ -224,7 +227,7 @@ class Utils_functions:
 
     def distribute_dec2(self, x, model, bs=32):
         outls = []
-        bdim = x.shape[0]
+        bdim = tf.shape(x)[0]  # Use dynamic shape
         print('bdim ', bdim)
         for i in range(((bdim - 2) // bs) + 1):
             inp1 = x[i * bs: i * bs + bs]
@@ -472,9 +475,8 @@ class Utils_functions:
 
     def distribute_gen(self, x, model, bs=32):
         outls = []
-        bdim = x.shape[0]
-        if bdim is None:
-            bdim = 6
+        bdim = tf.shape(x)[0]  # Use dynamic shape
+        print('bdim ', bdim)
         if bdim == 1:
             bdim = 2
         for i in range(((bdim - 2) // bs) + 1):
@@ -486,9 +488,11 @@ class Utils_functions:
         print('Generating waveform...')
         print(inp.shape)
         ab = self.distribute_gen(inp, gen_ema, bs=batch_size)
-        abls = tf.split(ab, inp.shape[0], 0)
+        abls = tf.split(ab, tf.shape(inp)[0], 0)    # check for dynamic shape
+
         ab = tf.concat(abls, -2)
-        abls = tf.split(ab, ab.shape[-2] // 8, -2)
+        abls = tf.split(ab, tf.shape(ab)[-2] // 8, -2) # check for dynamic shape
+
         abi = tf.concat(abls, 0)
 
         chls = []
@@ -498,7 +502,7 @@ class Utils_functions:
                 dec2,
                 bs=batch_size,
             )
-            abls = tf.split(ab, ab.shape[-2] // self.args.shape, -2)
+            abls = tf.split(ab, tf.shape(ab)[-2] // self.args.shape, -2) # check for dynamic shape
             ab = tf.concat(abls, 0)
             ab_m, ab_p = self.distribute_dec(ab, dec, bs=batch_size)
             abwv = self.conc_tog_specphase(ab_m, ab_p)
