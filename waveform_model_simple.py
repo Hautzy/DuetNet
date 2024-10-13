@@ -41,7 +41,7 @@ waveform_model = Model(inputs=input_tensor, outputs=waveform_output)
 
 # Generate a fixed-size dummy input and build the model
 print('Building the model with fixed input data...')
-dummy_input = tf.random.normal(shape=(256, 128))  # Use the fixed batch size
+dummy_input = tf.random.normal(shape=(6, 256, 128))  # Use the fixed batch size
 waveform_model(dummy_input)  # Build the model with the fixed input
 
 # Ensure the export directory exists
