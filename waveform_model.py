@@ -25,23 +25,21 @@ class GenerateWaveformLayer(Layer):
         self.dec = dec
         self.dec2 = dec2
 
-    @tf.function
+    def build(self, input_shape):
+        pass
+
     def call(self, inputs):
-        if inputs.shape[0] is None:
-            print('Using dummy data to build the model...')
-            fac = (args.seconds // 23) + 1
-            inputs = U.get_noise_interp_multi(fac, args.truncation)
+        print('inputs ', inputs.shape)
         return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
-input_tensor = Input(shape=(256, 128))
+batch_size = 6
+input_tensor = Input(batch_size=batch_size, shape=(256, 128))
 waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
 waveform_model = Model(inputs=input_tensor, outputs=waveform_layer)
 
-fac = (args.seconds // 23) + 1
-
 print('Using actual data to build the model...')
-dummy_input = U.get_noise_interp_multi(fac, args.truncation)
+dummy_input = U.get_noise_interp_multi(batch_size, args.truncation)
 waveform_model(dummy_input)
 
 if not os.path.isdir(export_folder):
