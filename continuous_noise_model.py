@@ -60,7 +60,7 @@ def build_model():
     print('Using actual data to build the model...')
 
     for k in range(10):
-        noise, right_noisel = continous_noise_model(noiseg, right_noisel)
+        noise, right_noisel = continous_noise_model([noiseg, right_noisel])
         print(noise.shape)
         print(right_noisel.shape)
 
