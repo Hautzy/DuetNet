@@ -50,7 +50,7 @@ class ContinuousNoiseLayer(Layer):
 def build_model():
 
     noiseg_input = Input(batch_size=1, shape=(64))
-    right_noisel_input = Input(batch_size=1, shape=(64))
+    right_noisel_input = Input(batch_size=1, shape=(128))
 
     continuous_noise_layer = ContinuousNoiseLayer()([noiseg_input, right_noisel_input])
     continous_noise_model = Model(inputs=[noiseg_input, right_noisel_input], outputs=continuous_noise_layer)
@@ -71,20 +71,20 @@ def build_model():
 
     continous_noise_model.save(f'./{export_folder}/continous_noise_model')
 
+def test():
+    fac = 1
+    var = 2.0
+    noiseg = U.truncated_normal([1, args.coorddepth], var, dtype=tf.float32)
+    right_noisel = tf.concat([U.truncated_normal([1, 64], var, dtype=tf.float32), noiseg], -1)
+
+    print(noiseg.shape)
+
+    noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
+    print(noise.shape)
+    print(right_noisel.shape)
+    noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
+    print(noise.shape)
+    print(right_noisel.shape)
+
 
 build_model()
-
-'''
-fac = 1
-var = 2.0
-
-noiseg = U.truncated_normal([1, args.coorddepth], var, dtype=tf.float32)
-right_noisel = None
-
-noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
-print(noise.shape)
-print(right_noisel.shape)
-noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
-print(noise.shape)
-print(right_noisel.shape)
-'''
