@@ -48,7 +48,7 @@ class ContinuousNoiseLayer(Layer):
         noiseg, right_noisel = inputs
         print('noiseg ', noiseg.shape)
         print('right_noisel ', right_noisel.shape)
-        return continuous_noise_interp(inputs, right_noisel)
+        return continuous_noise_interp(noiseg, right_noisel)
 
 def build_model():
 
