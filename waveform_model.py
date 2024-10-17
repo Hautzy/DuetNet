@@ -32,7 +32,7 @@ class GenerateWaveformLayer(Layer):
         print('inputs ', inputs.shape)
         return U.generate_waveform(inputs, self.gen_ema, self.dec, self.dec2, batch_size=64)
 
-batch_size = 6
+batch_size = 1
 input_tensor = Input(batch_size=batch_size, shape=(256, 128))
 waveform_layer = GenerateWaveformLayer(gen_ema, dec, dec2)(input_tensor)
 
