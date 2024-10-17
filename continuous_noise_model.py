@@ -25,16 +25,11 @@ def continuous_noise_interp(noiseg, right_noisel, fac=1, var=2.0):
         ],
         -2,
     )
-    print('rls', rls.shape)
 
     rls = U.center_coordinate(rls)
-    print('rls', rls.shape)
     rls = rls[:, args.latlen // 4:, :]
-    print('rls', rls.shape)
     rls = rls[:, : (rls.shape[-2] // args.latlen) * args.latlen, :]
-    print('rls', rls.shape)
     rls = tf.split(rls, rls.shape[-2] // args.latlen, -2)
-    print('rls', rls.shape)
     return tf.concat(rls[:fac], 0), noisels[-1]
 
 class ContinuousNoiseLayer(Layer):
