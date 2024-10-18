@@ -1,6 +1,8 @@
 import os
 from parse.parse_generate import parse_args
 from utils import Utils_functions
+import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from continuous_noise_model import continuous_noise_interp
 from models import Models_functions
@@ -36,3 +38,28 @@ wv2 = U.generate_waveform(noise, gen_ema, dec, dec2, batch_size=64)
 result = tf.concat([wv0, wv1, wv2], axis=0)
 
 print(result.shape)
+
+# Convert TensorFlow tensor to numpy for plotting
+waveform = result.numpy()
+
+# Plotting the waveform
+plt.figure(figsize=(10, 6))
+
+# Plotting the first channel
+plt.plot(waveform[:, 0], label="Channel 1")
+
+# Plotting the second channel
+plt.plot(waveform[:, 1], label="Channel 2")
+
+# Add vertical lines at the boundaries where tensors were concatenated
+plt.axvline(x=wv0.shape[0], color='red', linestyle='--', label='Connection Point 1')
+plt.axvline(x=2*wv0.shape[0], color='green', linestyle='--', label='Connection Point 2')
+
+# Adding labels and legend
+plt.title('Waveforms with Connection Points')
+plt.xlabel('Sample Index')
+plt.ylabel('Amplitude')
+plt.legend()
+
+# Show the plot
+plt.show()
