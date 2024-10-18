@@ -33,6 +33,6 @@ noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
 wv2 = U.generate_waveform(noise, gen_ema, dec, dec2, batch_size=64)
 
 # concat wv tensors
-result = tf.concat([wv0, wv1, wv2])
+result = tf.concat([wv0, wv1, wv2], axis=0)
 
 print(result.shape)

@@ -85,5 +85,5 @@ def test():
     print(right_noisel.shape)
 
 
-build_model()
+#build_model()
 #test()
