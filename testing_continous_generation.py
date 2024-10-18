@@ -61,5 +61,8 @@ plt.xlabel('Sample Index')
 plt.ylabel('Amplitude')
 plt.legend()
 
-# Show the plot
-plt.show()
+output_image_path = 'waveform_plot.png'
+plt.savefig(output_image_path)
+
+# Close the plot to free up memory
+plt.close()
