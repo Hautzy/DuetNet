@@ -42,26 +42,36 @@ print(result.shape)
 # Convert TensorFlow tensor to numpy for plotting
 waveform = result.numpy()
 
-# Plotting the waveform
-plt.figure(figsize=(10, 6))
+# Create subplots for two waveform channels
+fig, axs = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-# Plotting the first channel
-plt.plot(waveform[:, 0], label="Channel 1")
+# Plot channel 1
+axs[0].plot(waveform[:, 0], label="Channel 1", color="blue")
+axs[0].set_title('Waveform Channel 1')
+axs[0].set_ylabel('Amplitude')
+axs[0].legend()
 
-# Plotting the second channel
-plt.plot(waveform[:, 1], label="Channel 2")
+# Plot vertical lines at the connection points
+axs[0].axvline(x=wv0.shape[0], color='red', linestyle='--', label='Connection Point 1')
+axs[0].axvline(x=2*wv0.shape[0], color='green', linestyle='--', label='Connection Point 2')
 
-# Add vertical lines at the boundaries where tensors were concatenated
-plt.axvline(x=wv0.shape[0], color='red', linestyle='--', label='Connection Point 1')
-plt.axvline(x=2*wv0.shape[0], color='green', linestyle='--', label='Connection Point 2')
+# Plot channel 2
+axs[1].plot(waveform[:, 1], label="Channel 2", color="orange")
+axs[1].set_title('Waveform Channel 2')
+axs[1].set_xlabel('Sample Index')
+axs[1].set_ylabel('Amplitude')
+axs[1].legend()
 
-# Adding labels and legend
-plt.title('Waveforms with Connection Points')
-plt.xlabel('Sample Index')
-plt.ylabel('Amplitude')
-plt.legend()
+# Plot vertical lines at the connection points
+axs[1].axvline(x=wv0.shape[0], color='red', linestyle='--', label='Connection Point 1')
+axs[1].axvline(x=2*wv0.shape[0], color='green', linestyle='--', label='Connection Point 2')
 
-output_image_path = 'waveform_plot.png'
+# Add labels and title
+fig.suptitle('Waveforms with Connection Points')
+plt.tight_layout()
+
+# Save the plot as an image file (e.g., PNG format)
+output_image_path = 'waveform_plot_better.png'
 plt.savefig(output_image_path)
 
 # Close the plot to free up memory
