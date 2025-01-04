@@ -15,7 +15,7 @@ def continuous_noise_interp(noiseg, right_noisel, fac=1, var=2.0):
     coordratio = args.coordlen // args.latlen
 
     noisels = [right_noisel]
-    for k in range(3 + ((fac - 1) // coordratio) - 1):
+    for k in range(2 + ((fac - 1) // coordratio) - 1):
         noisels.append(tf.concat([U.truncated_normal([1, 64], var, dtype=tf.float32), noiseg], -1))
 
     rls = tf.concat(
@@ -86,4 +86,4 @@ def test():
 
 
 #build_model()
-#test()
+test()
