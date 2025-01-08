@@ -35,7 +35,9 @@ def continuous_noise_interp(noiseg, right_noisel, fac=1, var=2.0):
     # rls = rls[:, args.latlen // 4:, :]
     # rls = rls[:, : (rls.shape[-2] // args.latlen) * args.latlen, :]
     rls = tf.split(rls, rls.shape[-2] // args.latlen, -2)
-    return tf.concat(rls[:fac], 0), rls[0, -1, :]
+    last_noisel = rls[0][:, -1, :]
+    print(last_noisel)
+    return tf.concat(rls[:fac], 0), last_noisel
 
 class ContinuousNoiseLayer(Layer):
     def __init__(self, **kwargs):
