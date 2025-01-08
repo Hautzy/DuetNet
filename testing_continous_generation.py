@@ -33,14 +33,14 @@ wv1 = U.generate_waveform(noise_1, gen_ema, dec, dec2, batch_size=64)
 noise_2, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
 wv2 = U.generate_waveform(noise_2, gen_ema, dec, dec2, batch_size=64)
 
-total_noise = tf.concat([noise_0, noise_1, noise_2], axis=0)
+total_noise = tf.concat([noise_0, noise_1, noise_2], axis=1)
 print(total_noise.shape)
 
-total_noise_np = total_noise.numpy()
+total_noise_np = total_noise.numpy().squeeze()
 
 fig0, axs0 = plt.subplots(1, 1, figsize=(10, 8), sharex=True)
 
-axs0.plot(total_noise_np[:, 0])
+axs0.plot(total_noise_np)
 
 plt.savefig('test.png')
 plt.close()
