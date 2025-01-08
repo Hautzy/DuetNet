@@ -24,15 +24,27 @@ noiseg = U.truncated_normal([1, args.coorddepth], var, dtype=tf.float32)
 right_noisel = tf.concat([U.truncated_normal([1, 64], var, dtype=tf.float32), noiseg], -1)
 
 
-noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
-wv0 = U.generate_waveform(noise, gen_ema, dec, dec2, batch_size=64)
+noise_0, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
+wv0 = U.generate_waveform(noise_0, gen_ema, dec, dec2, batch_size=64)
 
-noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
-wv1 = U.generate_waveform(noise, gen_ema, dec, dec2, batch_size=64)
+noise_1, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
+wv1 = U.generate_waveform(noise_1, gen_ema, dec, dec2, batch_size=64)
 
+noise_2, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
+wv2 = U.generate_waveform(noise_2, gen_ema, dec, dec2, batch_size=64)
 
-noise, right_noisel = continuous_noise_interp(noiseg, right_noisel, fac, var)
-wv2 = U.generate_waveform(noise, gen_ema, dec, dec2, batch_size=64)
+total_noise = tf.concat([noise_0, noise_1, noise_2], axis=0)
+print(total_noise.shape)
+
+total_noise_np = total_noise.numpy()
+
+fig0, axs0 = plt.subplots(1, 1, figsize=(10, 8), sharex=True)
+
+axs0.plot(total_noise_np[:, 0])
+
+plt.savefig('test.png')
+plt.close()
+
 
 # concat wv tensors
 result = tf.concat([wv0, wv1, wv2], axis=0)
